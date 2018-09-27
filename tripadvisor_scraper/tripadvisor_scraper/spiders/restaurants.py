@@ -53,6 +53,8 @@ class RestaurantsSpider(scrapy.Spider):
                                                .extract_first()
         restaurant['country'] =        response.css('div#BODYCON div.address span.country-name::text')\
                                                .extract_first()
+        restaurant['cuisine'] =        response.css('div#BODYCON div.centerWell div.text::text')\
+                                               .extract_first()
 
         try:
             rating_str = response.css('''span.header_rating
