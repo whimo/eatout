@@ -1,6 +1,7 @@
 from . import app, db
 from flask import jsonify, abort, request
 from sqlalchemy import func
+from flask_login import current_user, login_user, logout_user, login_required
 from .models import Place, User, Review
 from .serial import serialize
 
@@ -29,7 +30,7 @@ def get_review(id):
 def register():
     json = request.get_json()
     if not json or not all(param in json for param in ['email', 'password', 'tripadvisor_username']):
-        abort(400)
+        return jsonify({'error': 'invalid_json'})
     
     if User.query.filter(func.lower(User.email) == json['email'].lower()).first():
         return jsonify({'error': 'email_exists'})
@@ -45,6 +46,32 @@ def register():
         db.session.commit()
     except:
         db.session.rollback()
-        abort(500)
+        return jsonify({'error': 'db_commit_failed'})
     
     return jsonify({'status': 'ok'})
+
+@app.route('/login', methods=['POST'])
+def login():
+    if current_user.is_authenticated:
+        return jsonify({'error': 'user_logged_in'})
+
+    json = request.get_json()
+    if not json or not all(param in json for param in ['email', 'password', 'remember_me']) or type(json['remember_me']) != bool:
+        return jsonify({'error': 'invalid_json'})
+    
+    user = User.query.filter(func.lower(User.email) == json['email'].lower()).first()
+    if user is None:
+        return jsonify({'error': 'no_user'})
+    elif not user.check_password(json['password']):
+        return jsonify({'error': 'wrong_password'})
+
+    login_user(user, json['remember_me'])
+    return jsonify({'status': 'ok'})
+
+@app.route('/logout')
+def logout():
+    if current_user.is_authenticated:
+        logout_user()
+        return jsonify({'status': 'ok'})
+    
+    return jsonify({'error': 'user_not_logged_in'})
