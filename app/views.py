@@ -12,6 +12,14 @@ def get_place(id):
         abort(404)
     return jsonify(serialize(place))
 
+@app.route('/p/<string:name>')
+def find_place(name):
+    place = Place.query.filter(func.lower(Place.name) == name.lower()).first()
+    if place is None:
+        abort(404)
+    
+    return jsonify(serialize(place))
+
 @app.route('/u/<int:id>')
 def get_user(id):
     user = User.query.get(id)
