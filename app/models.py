@@ -1,4 +1,4 @@
-from . import db
+from . import db, bcrypt
 
 PLACE_DEFAULT = 0
 PLACE_RESTAURANT = 1
@@ -8,11 +8,17 @@ PLACE_BAR = 3
 
 class User(db.Model):
     id =                   db.Column(db.Integer, primary_key=True)
-    email =                db.Column(db.String(60), index=True)
+    email =                db.Column(db.String(60), index=True, unique=True)
     password =             db.Column(db.String(60))
-    tripadvisor_username = db.Column(db.String(100), index=True)
+    tripadvisor_username = db.Column(db.String(100), index=True, unique=True)
 
     reviews = db.relationship('Review', backref='user', lazy='dynamic')
+
+    def set_password(self, password):
+        self.password = bcrypt.generate_password_hash(password).decode('ascii')
+    
+    def check_password(self, password):
+        return bcrypt.check_password_hash(self.password, password)
 
 
 class Place(db.Model):
