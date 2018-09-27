@@ -14,6 +14,9 @@ BOT_NAME = 'tripadvisor_scraper'
 SPIDER_MODULES = ['tripadvisor_scraper.spiders']
 NEWSPIDER_MODULE = 'tripadvisor_scraper.spiders'
 
+BASE_URL = 'https://www.tripadvisor.ru'
+START_URL = '/Restaurants-g298484-Moscow_Central_Russia.html'
+
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'tripadvisor_scraper (+http://www.yourdomain.com)'
