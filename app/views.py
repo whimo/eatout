@@ -14,11 +14,11 @@ def get_place(id):
 
 @app.route('/p/<string:name>')
 def find_place(name):
-    place = Place.query.filter(func.lower(Place.name) == name.lower()).first()
-    if place is None:
+    places = Place.query.filter(Place.name.ilike('%' + name + '%')).all()
+    if len(places) < 1:
         abort(404)
-    
-    return jsonify(serialize(place))
+
+    return jsonify([serialize(place) for place in places])
 
 @app.route('/u/<int:id>')
 def get_user(id):
@@ -39,13 +39,13 @@ def register():
     json = request.get_json()
     if not json or not all(param in json for param in ['email', 'password', 'tripadvisor_username']):
         return jsonify({'error': 'invalid_json'})
-    
+
     if User.query.filter(func.lower(User.email) == json['email'].lower()).first():
         return jsonify({'error': 'email_exists'})
-    
+
     if User.query.filter(func.lower(User.tripadvisor_username) == json['tripadvisor_username'].lower()).first():
         return jsonify({'error': 'tripadvisor_username_exists'})
-        
+
     user = User(email=json['email'], tripadvisor_username=json['tripadvisor_username'])
     user.set_password(json['password'])
 
@@ -55,7 +55,7 @@ def register():
     except:
         db.session.rollback()
         return jsonify({'error': 'db_commit_failed'})
-    
+
     return jsonify({'status': 'ok'})
 
 @app.route('/login', methods=['POST'])
@@ -66,7 +66,7 @@ def login():
     json = request.get_json()
     if not json or not all(param in json for param in ['email', 'password', 'remember_me']) or type(json['remember_me']) != bool:
         return jsonify({'error': 'invalid_json'})
-    
+
     user = User.query.filter(func.lower(User.email) == json['email'].lower()).first()
     if user is None:
         return jsonify({'error': 'no_user'})
@@ -81,5 +81,5 @@ def logout():
     if current_user.is_authenticated:
         logout_user()
         return jsonify({'status': 'ok'})
-    
+
     return jsonify({'error': 'user_not_logged_in'})
