@@ -12,6 +12,10 @@ migrate = Migrate(app, db)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 
-cors = CORS(app, resources={r'/*': {'origins': app.config['CORS_DESTINATION']}})
+cors = CORS(app,
+            resources={
+                r'/*': {'origins': app.config['CORS_DESTINATION']}
+            },
+            supports_credentials=True)
 
 from . import views, models
