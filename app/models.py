@@ -32,6 +32,7 @@ class Place(db.Model):
     name =            db.Column(db.Text, index=True)
     place_type =      db.Column(db.SmallInteger)
     tripadvisor_url = db.Column(db.Text)
+    image_url =       db.Column(db.Text)
     navicontainer =   db.Column(db.String(18))
     naviaddress =     db.Column(db.String(18))
     rating =          db.Column(db.SmallInteger)
