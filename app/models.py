@@ -17,7 +17,7 @@ class User(db.Model, UserMixin):
 
     def set_password(self, password):
         self.password = bcrypt.generate_password_hash(password).decode('ascii')
-    
+
     def check_password(self, password):
         return bcrypt.check_password_hash(self.password, password)
 
@@ -28,13 +28,13 @@ def loader(user_id):
 
 
 class Place(db.Model):
-    id =             db.Column(db.Integer, primary_key=True)
-    name =           db.Column(db.Text, index=True)
-    place_type =     db.Column(db.SmallInteger)
-    tripadvisor_id = db.Column(db.Integer)
-    navicontainer =  db.Column(db.String(18))
-    naviaddress =    db.Column(db.String(18))
-    rating =         db.Column(db.SmallInteger)
+    id =              db.Column(db.Integer, primary_key=True)
+    name =            db.Column(db.Text, index=True)
+    place_type =      db.Column(db.SmallInteger)
+    tripadvisor_url = db.Column(db.Text)
+    navicontainer =   db.Column(db.String(18))
+    naviaddress =     db.Column(db.String(18))
+    rating =          db.Column(db.SmallInteger)
 
     reviews = db.relationship('Review', backref='place', lazy='dynamic')
 
