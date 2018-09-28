@@ -4,6 +4,8 @@ from sqlalchemy import func
 from flask_login import current_user, login_user, logout_user, login_required
 from .models import Place, User, Review
 from .serial import serialize
+import requests
+from json import dumps
 
 @app.route('/p/<int:id>')
 def get_place(id):
@@ -83,3 +85,44 @@ def logout():
         return jsonify({'status': 'ok'})
 
     return jsonify({'error': 'user_not_logged_in'})
+
+@app.route('/create_naviaddress', methods=['POST'])
+def create_naviaddress():
+    json = request.get_json()
+    if (not json or not all(param in json for param in ['lat', 'lng', 'default_lang', 'address_type']) or
+        type(json['lat']) != float or
+        type (json['lng']) != float):
+        return jsonify({'error': 'invalid_json'})
+
+    session_url = 'https://staging-api.naviaddress.com/api/v1.5/Sessions'
+    session_json = {
+        'email': 'e6679282@nwytg.net',
+        'password': 'FuckOffHackersPls',
+        'type': 'email'
+    }
+    r = requests.post(session_url, data=dumps(session_json), headers={'Content-Type': 'application/json'})
+
+    if not r.ok:
+        return jsonify({'error': 'naviaddress_session_error'})
+
+    session_response_json = r.json()
+
+    if session_response_json and 'token' in session_response_json:
+        token = session_response_json['token']
+    else:
+        return jsonify({'error': 'naviaddress_session_json_error'})
+
+    create_url = 'https://staging-api.naviaddress.com/api/v1.5/Addresses'
+    r = requests.post(create_url, data=dumps(json), headers={'Content-Type': 'application/json', 'Accept': 'appication/json', 'auth-token': token})
+    if not r.ok:
+        return jsonify({'error': 'naviaddress_creation_error'})
+    
+    creation_response_json = r.json()
+
+    if session_response_json:
+        return jsonify({
+            'status': 'ok',
+            'response': creation_response_json
+        })
+    
+    return jsonify({'error': 'naviaddress_creation_json_error'})
