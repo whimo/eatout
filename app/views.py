@@ -12,13 +12,21 @@ def get_place(id):
         abort(404)
     return jsonify(serialize(place))
 
-@app.route('/p/<string:name>')
+@app.route('/p/search/<string:name>')
 def find_place(name):
     places = Place.query.filter(Place.name.ilike('%' + name + '%')).all()
     if len(places) < 1:
         abort(404)
 
     return jsonify([serialize(place) for place in places])
+
+@app.route('/p/range/<int:start>/<int:stop>/<string:name>')
+def find_place_range(start, stop, name):
+    places = Place.query.filter(Place.name.ilike('%' + name + '%')).all()
+    if len(places) < 1:
+        abort(404)
+
+    return jsonify([serialize(place) for place in places][start:stop])
 
 @app.route('/u/<int:id>')
 def get_user(id):
@@ -83,3 +91,15 @@ def logout():
         return jsonify({'status': 'ok'})
 
     return jsonify({'error': 'user_not_logged_in'})
+
+@app.route('/current_user')
+def get_current_user():
+    if current_user is None:
+        abort(404)
+
+    return serialize(current_user)
+
+@app.route('/demo')
+def demo():
+    places = Place.query.all()
+    return jsonify(list(reversed(list(map(serialize, places)))))
