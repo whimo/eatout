@@ -62,7 +62,7 @@ class RestaurantsSpider(scrapy.Spider):
             restaurant['avg_rating'] = int(re.findall('bubble_[0-9]{2}', rating_str)[0][7:]) / 10.0
 
             numratings_str = response.css('''span.header_rating a.more span::text''').extract_first()
-            restaurant['num_reviews'] = int(numratings_str)
+            restaurant['num_reviews'] = int(numratings_str.replace(' ', ''))
 
         except (ValueError, TypeError, IndexError):
             restaurant['avg_rating'] = None
