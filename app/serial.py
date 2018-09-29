@@ -1,5 +1,6 @@
 from .models import User, Place, Review
 
+
 def serialize(obj):
     if isinstance(obj, User):
         return _serialize_user(obj)
@@ -16,6 +17,7 @@ def _serialize_user(obj):
         'tripadvisor_username': obj.tripadvisor_username
     }
 
+
 def _serialize_place(obj):
     return {
         'id': obj.id,
@@ -26,6 +28,7 @@ def _serialize_place(obj):
         'naviaddress': obj.naviaddress,
         'rating': obj.rating
     }
+
 
 def _serialize_review(obj):
     return {
