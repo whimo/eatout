@@ -18,4 +18,4 @@ cors = CORS(app,
             },
             supports_credentials=True)
 
-from . import views, models
+from . import views, models, recommender
