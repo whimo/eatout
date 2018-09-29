@@ -103,8 +103,19 @@ def get_current_user():
 
 @app.route('/demo')
 def demo():
-    places = Place.query.all()
+    places = [Place.query.get(126), Place.query.get(127)]
     return jsonify(list(reversed(list(map(serialize, places)))))
+
+@app.route('/rate/<int:id>', methods=['POST'])
+def rate_place(id):
+    # TODO: record rating for user
+    json = request.get_json()
+    rate = json['rating']
+    if not isinstance(rate, int):
+        return jsonify({'error': 'not an int'})
+
+    print('Pls rate me with ' + str(rate))
+    return jsonify({'status': 'ok'})
 
 @app.route('/create_naviaddress', methods=['POST'])
 def create_naviaddress():
@@ -136,7 +147,7 @@ def create_naviaddress():
     r = requests.post(create_url, data=dumps(json), headers={'Content-Type': 'application/json', 'Accept': 'appication/json', 'auth-token': token})
     if not r.ok:
         return jsonify({'error': 'naviaddress_creation_error'})
-    
+
     creation_response_json = r.json()
 
     if session_response_json:
@@ -144,6 +155,5 @@ def create_naviaddress():
             'status': 'ok',
             'response': creation_response_json
         })
-    
-    return jsonify({'error': 'naviaddress_creation_json_error'})
 
+    return jsonify({'error': 'naviaddress_creation_json_error'})
