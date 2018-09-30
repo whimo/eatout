@@ -61,7 +61,7 @@ class PositiveRecommender:
             model_place_ids = [self.place_model_map[id] for id in place_ids]
 
         model_user_id = self.user_model_map[user_id]
-        scores = self.model.predict(model_user_id, np.arange(model_place_ids))
+        scores = self.model.predict(model_user_id, model_place_ids)
         places_ranking = self.place_ids[np.argsort(-scores)]
 
         return places_ranking
@@ -147,8 +147,8 @@ class CombinedRecommender:
             model_place_ids = [self.place_model_map[id] for id in place_ids]
 
         model_user_id = self.user_model_map[user_id]
-        positive_scores = self.positive_model.predict(model_user_id, np.arange(model_place_ids))
-        negative_scores = self.negative_model.predict(model_user_id, np.arange(model_place_ids))
+        positive_scores = self.positive_model.predict(model_user_id, model_place_ids)
+        negative_scores = self.negative_model.predict(model_user_id, model_place_ids)
         places_ranking = self.place_ids[np.argsort(-positive_scores / negative_scores)]
 
         return places_ranking
