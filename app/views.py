@@ -1,4 +1,4 @@
-from . import app, db
+from . import app, db, recommender
 from flask import jsonify, abort, request
 from sqlalchemy import func
 from flask_login import current_user, login_user, logout_user, login_required
