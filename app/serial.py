@@ -26,6 +26,7 @@ def _serialize_place(obj):
         'tripadvisor_url': obj.tripadvisor_url,
         'navicontainer': obj.navicontainer,
         'naviaddress': obj.naviaddress,
+        'image_url': pbj.image_url,
         'rating': obj.rating
     }
 
