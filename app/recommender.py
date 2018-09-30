@@ -54,15 +54,15 @@ class PositiveRecommender:
         if save:
             self.save()
 
-    def recommend(self, user_id, place_ids=None):
-        if not place_ids:
+    def recommend(self, user_id, filter_place_ids=None):
+        if not filter_place_ids:
             model_place_ids = np.arange(self.n_places)
         else:
-            model_place_ids = [self.place_model_map[id] for id in place_ids]
+            model_place_ids = [self.place_model_map[id] for id in filter_place_ids]
 
         model_user_id = self.user_model_map[user_id]
         scores = self.model.predict(model_user_id, model_place_ids)
-        places_ranking = self.place_ids[np.argsort(-scores)]
+        places_ranking = self.place_ids[model_place_ids[np.argsort(-scores)]]
 
         return places_ranking
 
@@ -140,16 +140,16 @@ class CombinedRecommender:
         if save:
             self.save()
 
-    def recommend(self, user_id, place_ids=None):
-        if not place_ids:
+    def recommend(self, user_id, filter_place_ids=None):
+        if not filter_place_ids:
             model_place_ids = np.arange(self.n_places)
         else:
-            model_place_ids = [self.place_model_map[id] for id in place_ids]
+            model_place_ids = np.array([self.place_model_map[id] for id in filter_place_ids])
 
         model_user_id = self.user_model_map[user_id]
         positive_scores = self.positive_model.predict(model_user_id, model_place_ids)
         negative_scores = self.negative_model.predict(model_user_id, model_place_ids)
-        places_ranking = self.place_ids[np.argsort(-positive_scores / negative_scores)]
+        places_ranking = self.place_ids[model_place_ids[np.argsort(-positive_scores / negative_scores)]]
 
         return places_ranking
 
