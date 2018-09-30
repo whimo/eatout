@@ -54,9 +54,14 @@ class PositiveRecommender:
         if save:
             self.save()
 
-    def recommend(self, user_id):
+    def recommend(self, user_id, place_ids=None):
+        if not place_ids:
+            model_place_ids = np.arange(self.n_places)
+        else:
+            model_place_ids = [self.place_model_map[id] for id in place_ids]
+
         model_user_id = self.user_model_map[user_id]
-        scores = self.model.predict(model_user_id, np.arange(self.n_places))
+        scores = self.model.predict(model_user_id, np.arange(model_place_ids))
         places_ranking = self.place_ids[np.argsort(-scores)]
 
         return places_ranking
@@ -89,7 +94,8 @@ class CombinedRecommender:
                          place_ids if place_ids else (place.id for place in models.Place.query.distinct()))
 
         self.user_model_map = self.dataset.mapping()[0]
-        self.model_place_map = {v: k for k, v in self.dataset.mapping()[2].items()}
+        self.place_model_map = self.dataset.mapping()[2]
+        self.model_place_map = {v: k for k, v in self.place_model_map.items()}
 
         self.n_places = self.dataset.interactions_shape()[1]
 
@@ -134,10 +140,15 @@ class CombinedRecommender:
         if save:
             self.save()
 
-    def recommend(self, user_id):
+    def recommend(self, user_id, place_ids=None):
+        if not place_ids:
+            model_place_ids = np.arange(self.n_places)
+        else:
+            model_place_ids = [self.place_model_map[id] for id in place_ids]
+
         model_user_id = self.user_model_map[user_id]
-        positive_scores = self.positive_model.predict(model_user_id, np.arange(self.n_places))
-        negative_scores = self.negative_model.predict(model_user_id, np.arange(self.n_places))
+        positive_scores = self.positive_model.predict(model_user_id, np.arange(model_place_ids))
+        negative_scores = self.negative_model.predict(model_user_id, np.arange(model_place_ids))
         places_ranking = self.place_ids[np.argsort(-positive_scores / negative_scores)]
 
         return places_ranking
