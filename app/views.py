@@ -161,14 +161,14 @@ def recommend():
         places = models.Place.query
 
     if place_type:
-        places = places.filter_by(place_type=place_type).all()
+        places = places.filter_by(place_type=place_type)
     else:
-        places = places.all()
+        places = places
 
     try:
         suggestions = recommender.recommend(g.user.id, (place.id for place in places))[:10]
     except KeyError:
-        return jsonify({'error': 'recommender does not know this user'})
+        return jsonify(list(map(serialize, places.order_by(models.Place.rating.desc()))))
 
     return jsonify(list(map(serialize, Place.query.filter(Place.id.in_(list(map(int, suggestions)))).all())))
 
@@ -201,6 +201,10 @@ def rate_place(id):
     if not isinstance(rating, int):
         return jsonify({'error': 'not an int'})
 
+    first_review = False
+    if g.user.reviews.count() == 0:
+        first_review = True
+
     review = Review.query.filter_by(user_id=g.user.id, place_id=id).first()
     if not review:
         review = Review(user_id=g.user.id, place_id=id)
@@ -210,7 +214,10 @@ def rate_place(id):
     review.rating = rating
     db.session.commit()
 
-    recommender.fit_partial([review])
+    if first_review:
+        recommender.fit()
+    else:
+        recommender.fit_partial([review])
 
     return jsonify({'status': 'ok'})
 
