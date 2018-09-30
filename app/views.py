@@ -38,6 +38,29 @@ def get_place(id):
     return jsonify(serialize(place))
 
 
+@app.route('/p/create')
+def create_place():
+    data = request.get_json()
+    if 'name' not in data:
+        return jsonify({'error': 'must provide name'})
+
+    location = None
+    if 'lat' in data and 'lon' in data:
+        location = 'POINT({} {})'.format(data.get('lon'), data.get('lat'))
+
+    place = models.Place(name=data.get('name'),
+                         location=location,
+                         address=data.get('address'),
+                         place_type=PLACE_TYPES.get(data.get('type')),
+                         tripadvisor_url=data.get('tripadvisor_url', '').split('/')[-1],
+                         navicontainer=data.get('navicontainer'),
+                         naviaddress=data.get('naviaddress'))
+    db.session.add(place)
+    db.session.commit()
+
+    return jsonify({'status': 'ok', 'id': place.id})
+
+
 @app.route('/p/search/<string:name>')
 def find_place(name):
     places = Place.query.filter(Place.name.ilike('%' + name + '%')).all()
