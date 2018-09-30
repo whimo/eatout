@@ -45,6 +45,7 @@ class Place(db.Model):
     id =              db.Column(db.Integer, primary_key=True)
     name =            db.Column(db.Text, index=True)
     location =        db.Column(Geography('POINT'))
+    address =         db.Column(db.Text)
     place_type =      db.Column(db.SmallInteger)
     tripadvisor_url = db.Column(db.Text)
     image_url =       db.Column(db.Text)
