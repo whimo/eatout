@@ -131,12 +131,6 @@ def get_current_user():
     return serialize(g.user)
 
 
-@app.route('/demo')
-def demo():
-    places = [Place.query.get(126), Place.query.get(127)]
-    return jsonify(list(reversed(list(map(serialize, places)))))
-
-
 @app.route('/recommend')
 def recommend():
     if not g.user:
@@ -166,27 +160,9 @@ def recommend():
         places = places
 
     try:
-        suggestions = recommender.recommend(g.user.id, (place.id for place in places))[:10]
+        suggestions = recommender.recommend(g.user.id, (place.id for place in places))[:20]
     except KeyError:
-        return jsonify(list(map(serialize, places.order_by(models.Place.rating.desc()))))
-
-    return jsonify(list(map(serialize, Place.query.filter(Place.id.in_(list(map(int, suggestions)))).all())))
-
-
-@app.route('/recommend/<int:place_type>')
-def recommend_by_type(place_type):
-    if not g.user:
-        return jsonify({'error': 'authentication required'})
-
-    if place_type not in (models.PLACE_BAR, models.PLACE_CAFE, models.PLACE_RESTAURANT):
-        return jsonify({'error': 'unknown place type'})
-
-    place_ids = (place.id for place in Place.query.filter_by(type=place_type)).all()
-
-    try:
-        suggestions = recommender.recommend(g.user.id, place_ids)[:10]
-    except KeyError:
-        return jsonify({'error': 'recommender does not know this user'})
+        return jsonify(list(map(serialize, places.order_by(models.Place.rating.desc()).all()[:20])))
 
     return jsonify(list(map(serialize, Place.query.filter(Place.id.in_(list(map(int, suggestions)))).all())))
 
