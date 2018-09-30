@@ -1,11 +1,27 @@
-from . import app, models, db, recommender
-from flask import jsonify, abort, request
+from . import app, models, db, recommender, login_manager
+from flask import jsonify, abort, request, g
 from sqlalchemy import func
 from flask_login import current_user, login_user, logout_user, login_required
 from .models import Place, User, Review
 from .serial import serialize
 import requests
 from json import dumps
+
+
+@app.before_request
+def before_request():
+    '''
+    Set current request user before every request
+    '''
+    g.user = current_user
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    '''
+    Flask-Login user loader
+    '''
+    return models.User.query.get(int(user_id))
 
 
 @app.route('/p/<int:id>')
@@ -78,7 +94,7 @@ def register():
 
 @app.route('/login', methods=['POST'])
 def login():
-    if current_user.is_authenticated:
+    if g.user.is_authenticated:
         return jsonify({'error': 'user_logged_in'})
 
     json = request.get_json()
@@ -98,7 +114,7 @@ def login():
 
 @app.route('/logout')
 def logout():
-    if current_user.is_authenticated:
+    if g.user.is_authenticated:
         logout_user()
         return jsonify({'status': 'ok'})
 
@@ -107,10 +123,10 @@ def logout():
 
 @app.route('/current_user')
 def get_current_user():
-    if current_user is None:
+    if g.user is None:
         abort(404)
 
-    return serialize(current_user)
+    return serialize(g.user)
 
 
 @app.route('/demo')
@@ -121,11 +137,11 @@ def demo():
 
 @app.route('/recommend')
 def recommend():
-    if not current_user:
+    if not g.user:
         return jsonify({'error': 'authentication required'})
 
     try:
-        suggestions = recommender.recommend(current_user.id)[:10]
+        suggestions = recommender.recommend(g.user.id)[:10]
     except KeyError:
         return jsonify({'error': 'recommender does not know this user'})
 
@@ -134,7 +150,7 @@ def recommend():
 
 @app.route('/recommend/<int:place_type>')
 def recommend_by_type(place_type):
-    if not current_user:
+    if not g.user:
         return jsonify({'error': 'authentication required'})
 
     if place_type not in (models.PLACE_BAR, models.PLACE_CAFE, models.PLACE_RESTAURANT):
@@ -143,7 +159,7 @@ def recommend_by_type(place_type):
     place_ids = (place.id for place in Place.query.filter_by(type=place_type)).all()
 
     try:
-        suggestions = recommender.recommend(current_user.id, place_ids)[:10]
+        suggestions = recommender.recommend(g.user.id, place_ids)[:10]
     except KeyError:
         return jsonify({'error': 'recommender does not know this user'})
 
@@ -158,9 +174,9 @@ def rate_place(id):
     if not isinstance(rating, int):
         return jsonify({'error': 'not an int'})
 
-    review = Review.query.filter_by(user_id=current_user.id, place_id=id).first()
+    review = Review.query.filter_by(user_id=g.user.id, place_id=id).first()
     if not review:
-        review = Review(user_id=current_user.id, place_id=id)
+        review = Review(user_id=g.user.id, place_id=id)
         db.session.add(review)
         db.session.commit()
 
