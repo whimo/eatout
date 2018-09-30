@@ -89,6 +89,12 @@ class CombinedRecommender:
         self.positive_model = LightFM(loss=positive_loss, no_components=positive_n_components)
         self.negative_model = LightFM(loss=negative_loss, no_components=negative_n_components)
 
+        self.update_dataset(user_ids, place_ids)
+
+        self.positive_epochs = positive_epochs
+        self.negative_epochs = negative_epochs
+
+    def update_dataset(self, user_ids=None, place_ids=None):
         self.dataset = Dataset()
         self.dataset.fit(user_ids if user_ids else (user.id for user in models.User.query.distinct()),
                          place_ids if place_ids else (place.id for place in models.Place.query.distinct()))
@@ -102,13 +108,12 @@ class CombinedRecommender:
         # Construct array of places database IDs, with indices indicating the place's index in the dataset
         self.place_ids = np.array([self.model_place_map.get(i) for i in range(self.n_places)])
 
-        self.positive_epochs = positive_epochs
-        self.negative_epochs = negative_epochs
-
     def fit(self, reviews=None, save=True):
         if not reviews:
             positive_reviews = models.Review.query.filter(models.Review.rating > 4)
             negative_reviews = models.Review.query.filter(models.Review.rating <= 4)
+
+        self.update_dataset()
 
         positive_interactions, _ = self.dataset.build_interactions(((review.user_id, review.place_id)
                                                                     for review in positive_reviews))
