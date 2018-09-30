@@ -17,9 +17,9 @@ cors = CORS(app,
             },
             supports_credentials=True)
 
-from .recommender import PositiveRecommender
+from .recommender import CombinedRecommender
 
-recommender = PositiveRecommender()
+recommender = CombinedRecommender()
 try:
     recommender.load()
 except FileNotFoundError:
