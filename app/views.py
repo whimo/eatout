@@ -1,11 +1,17 @@
 from . import app, models, db, recommender, login_manager
 from flask import jsonify, abort, request, g
 from sqlalchemy import func
+from geoalchemy2 import func as geo
 from flask_login import current_user, login_user, logout_user, login_required
 from .models import Place, User, Review
 from .serial import serialize
 import requests
 from json import dumps
+
+
+PLACE_TYPES = {'restaurant': models.PLACE_RESTAURANT,
+               'bar': models.PLACE_BAR,
+               'cafe': models.PLACE_CAFE}
 
 
 @app.before_request
@@ -69,17 +75,13 @@ def get_review(id):
 @app.route('/register', methods=['POST'])
 def register():
     json = request.get_json()
-    if not json or not all(param in json for param in ['email', 'password', 'tripadvisor_username']):
+    if not json or not all(param in json for param in ['email', 'password']):
         return jsonify({'error': 'invalid_json'})
 
     if User.query.filter(func.lower(User.email) == json['email'].lower()).first():
         return jsonify({'error': 'email_exists'})
 
-    if User.query.filter(func.lower(User.tripadvisor_username) ==
-                         json['tripadvisor_username'].lower()).first():
-        return jsonify({'error': 'tripadvisor_username_exists'})
-
-    user = User(email=json['email'], tripadvisor_username=json['tripadvisor_username'])
+    user = User(email=json['email'])
     user.set_password(json['password'])
 
     try:
@@ -141,7 +143,30 @@ def recommend():
         return jsonify({'error': 'authentication required'})
 
     try:
-        suggestions = recommender.recommend(g.user.id)[:10]
+        lat = float(request.args.get('lat'))
+        lon = float(request.args.get('lon'))
+        radius = float(request.args.get('radius')) * 1000
+
+    except ValueError:
+        lat = None
+        lon = None
+        radius = None
+
+    place_type = PLACE_TYPES.get(request.args.get('type'))
+
+    if lat and lon and radius:
+        places = models.Place.query.filter(
+            geo.ST_DWithin(models.Place.location, 'POINT({} {})'.format(lon, lat), radius))
+    else:
+        places = models.Place.query
+
+    if place_type:
+        places = places.filter_by(place_type=place_type).all()
+    else:
+        places = places.all()
+
+    try:
+        suggestions = recommender.recommend(g.user.id, (place.id for place in places))[:10]
     except KeyError:
         return jsonify({'error': 'recommender does not know this user'})
 
@@ -168,7 +193,9 @@ def recommend_by_type(place_type):
 
 @app.route('/rate/<int:id>', methods=['POST'])
 def rate_place(id):
-    # TODO: record rating for user
+    if not g.user:
+        return jsonify({'error': 'authentication required'})
+
     json = request.get_json()
     rating = json['rating']
     if not isinstance(rating, int):
