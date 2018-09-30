@@ -162,7 +162,7 @@ def recommend():
     try:
         suggestions = recommender.recommend(g.user.id, (place.id for place in places))[:20]
     except KeyError:
-        return jsonify(list(map(serialize, places.order_by(models.Place.rating.desc()).all()[:20])))
+        return jsonify(list(map(serialize, places.order_by(models.Place.rating.desc().nullslast()).all()[:20])))
 
     return jsonify(list(map(serialize, Place.query.filter(Place.id.in_(list(map(int, suggestions)))).all())))
 
