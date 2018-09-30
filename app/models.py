@@ -1,5 +1,6 @@
 from . import db, bcrypt, login_manager
 from flask_login import UserMixin
+from geoalchemy2.types import Geography
 
 PLACE_DEFAULT = 0
 PLACE_RESTAURANT = 1
@@ -30,6 +31,7 @@ def loader(user_id):
 class Place(db.Model):
     id =              db.Column(db.Integer, primary_key=True)
     name =            db.Column(db.Text, index=True)
+    location =        db.Column(Geography('POINT'))
     place_type =      db.Column(db.SmallInteger)
     tripadvisor_url = db.Column(db.Text)
     image_url =       db.Column(db.Text)
