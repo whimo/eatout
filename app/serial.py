@@ -1,4 +1,5 @@
 from .models import User, Place, Review
+from shapely import wkb
 
 
 def serialize(obj):
@@ -13,15 +14,17 @@ def serialize(obj):
 def _serialize_user(obj):
     return {
         'id': obj.id,
-        'email': obj.email,
-        'tripadvisor_username': obj.tripadvisor_username
+        'email': obj.email
     }
 
 
 def _serialize_place(obj):
+    point = wkb.loads(bytes(obj.location.data))
     return {
         'id': obj.id,
         'name': obj.name,
+        'address': obj.address,
+        'location': (point.y, point.x),
         'place_type': obj.place_type,
         'tripadvisor_url': obj.tripadvisor_url,
         'navicontainer': obj.navicontainer,
