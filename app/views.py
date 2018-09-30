@@ -1,4 +1,4 @@
-from . import app, db, recommender
+from . import app, models, db, recommender
 from flask import jsonify, abort, request
 from sqlalchemy import func
 from flask_login import current_user, login_user, logout_user, login_required
@@ -128,21 +128,46 @@ def recommend():
         suggestions = recommender.recommend(current_user.id)[:10]
     except KeyError:
         return jsonify({'error': 'recommender does not know this user'})
-    return jsonify(map(serialize, Place.query.filter(Place.id.in_(suggestions)).all()))
+
+    return jsonify(list(map(serialize, Place.query.filter(Place.id.in_(list(map(int, suggestions)))).all())))
+
+
+@app.route('/recommend/<int:place_type>')
+def recommend_by_type(place_type):
+    if not current_user:
+        return jsonify({'error': 'authentication required'})
+
+    if place_type not in (models.PLACE_BAR, models.PLACE_CAFE, models.PLACE_RESTAURANT):
+        return jsonify({'error': 'unknown place type'})
+
+    place_ids = (place.id for place in Place.query.filter_by(type=place_type)).all()
+
+    try:
+        suggestions = recommender.recommend(current_user.id, place_ids)[:10]
+    except KeyError:
+        return jsonify({'error': 'recommender does not know this user'})
+
+    return jsonify(list(map(serialize, Place.query.filter(Place.id.in_(list(map(int, suggestions)))).all())))
 
 
 @app.route('/rate/<int:id>', methods=['POST'])
-def rate_place(id):
+def rate_place(id, rate):
     # TODO: record rating for user
     json = request.get_json()
     rating = json['rating']
     if not isinstance(rating, int):
         return jsonify({'error': 'not an int'})
 
-    review = Review(user_id=current_user.id, place_id=id, rating=rating)
-    db.session.add(review)
+    review = Review.query.filter_by(user_id=current_user.id, place_id=id).first()
+    if not review:
+        review = Review(user_id=current_user.id, place_id=id)
+        db.session.add(review)
+        db.session.commit()
+
+    review.rating = rating
     db.session.commit()
-    recommender.fit_partial((review.id))
+
+    recommender.fit_partial([review])
 
     return jsonify({'status': 'ok'})
 
@@ -155,7 +180,7 @@ def create_naviaddress():
             type(json['lng']) != float):
         return jsonify({'error': 'invalid_json'})
 
-    session_url = 'https://staging-api.naviaddress.com/api/v1.5/Sessions'
+    session_url = app.config['NAVIADDRESS_API_URL']
     session_json = {
         'email': app.config['BOT_EMAIL'],
         'password': app.config['BOT_PASSWORD'],
