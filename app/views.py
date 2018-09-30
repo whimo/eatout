@@ -150,8 +150,8 @@ def recommend_by_type(place_type):
     return jsonify(list(map(serialize, Place.query.filter(Place.id.in_(list(map(int, suggestions)))).all())))
 
 
-@app.route('/rate', methods=['POST'])
-def rate_place(id, rate):
+@app.route('/rate/<int:id>', methods=['POST'])
+def rate_place(id):
     # TODO: record rating for user
     json = request.get_json()
     rating = json['rating']
