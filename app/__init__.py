@@ -4,7 +4,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
-
 app = Flask(__name__)
 app.config.from_object('config')
 db = SQLAlchemy(app)
@@ -18,4 +17,14 @@ cors = CORS(app,
             },
             supports_credentials=True)
 
-from . import views, models, recommender
+from .recommender import PositiveRecommender
+
+recommender = PositiveRecommender()
+try:
+    recommender.load()
+except FileNotFoundError:
+    print('Saved recommender not found, fitting from database...')
+    recommender.fit()
+    print('Complete.')
+
+from . import views, models
