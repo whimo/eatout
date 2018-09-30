@@ -135,11 +135,15 @@ def recommend():
 def rate_place(id):
     # TODO: record rating for user
     json = request.get_json()
-    rate = json['rating']
-    if not isinstance(rate, int):
+    rating = json['rating']
+    if not isinstance(rating, int):
         return jsonify({'error': 'not an int'})
 
-    print('Pls rate me with ' + str(rate))
+    review = Review(user_id=current_user.id, place_id=id, rating=rating)
+    db.session.add(review)
+    db.session.commit()
+    recommender.fit_partial((review.id))
+
     return jsonify({'status': 'ok'})
 
 

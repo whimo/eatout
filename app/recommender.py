@@ -45,6 +45,14 @@ class PositiveRecommender:
         if save:
             self.save()
 
+    def fit_partial(self, reviews, save=True):
+        interactions, weights = self.dataset.build_interactions(((review.user_id, review.place_id)
+                                                                 for review in reviews))
+        self.model.fit_partial(interactions, epochs=self.epochs)
+
+        if save:
+            self.save()
+
     def recommend(self, user_id):
         model_user_id = self.user_model_map[user_id]
         scores = self.model.predict(model_user_id, np.arange(self.n_places))
