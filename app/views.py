@@ -118,6 +118,19 @@ def demo():
     places = [Place.query.get(126), Place.query.get(127)]
     return jsonify(list(reversed(list(map(serialize, places)))))
 
+
+@app.route('/recommend')
+def recommend():
+    if not current_user:
+        return jsonify({'error': 'authentication required'})
+
+    try:
+        suggestions = recommender.recommend(current_user.id)[:10]
+    except KeyError:
+        return jsonify({'error': 'recommender does not know this user'})
+    return jsonify(map(serialize, Place.query.filter(Place.id.in_(suggestions)).all()))
+
+
 @app.route('/rate/<int:id>', methods=['POST'])
 def rate_place(id):
     # TODO: record rating for user
@@ -128,6 +141,7 @@ def rate_place(id):
 
     print('Pls rate me with ' + str(rate))
     return jsonify({'status': 'ok'})
+
 
 @app.route('/create_naviaddress', methods=['POST'])
 def create_naviaddress():
