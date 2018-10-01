@@ -177,6 +177,8 @@ def recommend():
         lat = float(request.args.get('lat'))
         lon = float(request.args.get('lon'))
         radius = float(request.args.get('radius')) * 1000
+        if radius > app.config['MAX_SEARCH_RADIUS']:
+            radius = None
 
     except ValueError:
         lat = None
