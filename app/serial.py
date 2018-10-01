@@ -19,12 +19,15 @@ def _serialize_user(obj):
 
 
 def _serialize_place(obj):
-    point = wkb.loads(bytes(obj.location.data))
+    point = None
+    if obj.location is not None:
+        point = wkb.loads(bytes(obj.location.data))
+
     return {
         'id': obj.id,
         'name': obj.name,
         'address': obj.address,
-        'location': (point.y, point.x),
+        'location': (point.y, point.x) if point else None,
         'place_type': obj.place_type,
         'tripadvisor_url': obj.tripadvisor_url,
         'navicontainer': obj.navicontainer,
