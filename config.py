@@ -10,8 +10,12 @@ SECRET_KEY = '***REMOVED***'
 
 NAVIADDRESS_SESSION_URL = 'https://staging-api.naviaddress.com/api/v1.5/Sessions'
 NAVIADDRESS_ADDRESSES_URL = 'https://staging-api.naviaddress.com/api/v1.5/Addresses'
+NAVIADDRESS_ACCEPT_URL = 'https://staging-api.naviaddress.com/api/v1.5/Addresses/accept/{}/{}'
+NAVIADDRESS_UPDATE_URL = 'https://staging-api.naviaddress.com/api/v1.5/Addresses/{}/{}'
 
 NAVIADDRESS_DEFAULT_LANG = 'ru'
 
 BOT_EMAIL = '***REMOVED***'
 BOT_PASSWORD = '***REMOVED***'
+
+MAX_SEARCH_RADIUS = 10000
