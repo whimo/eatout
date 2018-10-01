@@ -7,11 +7,16 @@ from .models import Place, User, Review
 from .serial import serialize
 import requests
 from json import dumps
+from shapely import wkb
 
 
 PLACE_TYPES = {'restaurant': models.PLACE_RESTAURANT,
                'bar': models.PLACE_BAR,
                'cafe': models.PLACE_CAFE}
+
+TYPE_IDS = {models.PLACE_RESTAURANT: 4,
+            models.PLACE_BAR: 5,
+            models.PLACE_CAFE: 6}
 
 
 @app.before_request
@@ -230,9 +235,13 @@ def rate_place(id):
     return jsonify({'status': 'ok'})
 
 
-def create_naviaddress(lat, lon, default_lang=app.config['NAVIADDRESS_DEFAULT_LANG'], address_type='free'):
-    data = {'lat': float(lat),
-            'lon': float(lon),
+def create_naviaddress(place, default_lang=app.config['NAVIADDRESS_DEFAULT_LANG'], address_type='free'):
+    point = None
+    if place.location is not None:
+        point = wkb.loads(bytes(place.location.data))
+
+    data = {'lat': float(point.y),
+            'lon': float(point.x),
             'default_lang': default_lang,
             'address_type': address_type}
 
@@ -254,19 +263,39 @@ def create_naviaddress(lat, lon, default_lang=app.config['NAVIADDRESS_DEFAULT_LA
     else:
         return jsonify({'error': 'naviaddress_session_json_error'})
 
+    auth_headers = {'Content-Type': 'application/json',
+                    'Accept': 'appication/json',
+                    'auth-token': token}
+
     r = requests.post(app.config['NAVIADDRESS_ADDRESSES_URL'], data=data,
-                      headers={'Content-Type': 'application/json',
-                               'Accept': 'appication/json',
-                               'auth-token': token})
+                      headers=auth_headers)
     if not r.ok:
         return jsonify({'error': 'naviaddress_creation_error'})
 
     creation_response_json = r.json()
+    container = creation_response_json.get('container')
+    naviaddress = creation_response_json.get('naviaddress')
 
-    if session_response_json:
+    r = requests.post(app.config['NAVIADDRESS_ACCEPT_URL'].format(container, naviaddress),
+                      data={'container': container, 'naviaddress': naviaddress},
+                      headers=auth_headers)
+    if not r.ok:
+        return jsonify({'error': 'naviaddress_accept_error'})
+
+    info = {'name': place.name,
+            'map_visibility': 'true',
+            'category': TYPE_IDS.get(place.place_type),
+            'postal_address': place.address
+            }
+
+    r = requests.put(app.config['NAVIADDRESS_UPDATE_URL'].format(container, naviaddress),
+                     data=info,
+                     headers=auth_headers)
+
+    if r.json():
         return jsonify({
             'status': 'ok',
-            'response': creation_response_json
+            'response': r.json()
         })
 
     return jsonify({'error': 'naviaddress_creation_json_error'})
