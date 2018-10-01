@@ -95,6 +95,15 @@ def get_review(id):
     return jsonify(serialize(review))
 
 
+@app.route('/r')
+def get_reviews():
+    if not g.user.is_authenticated:
+        return jsonify({'error': 'authentication required'})
+
+    reviews = g.user.reviews.order_by(Review.rating.desc().nullslast()).all()
+    return jsonify(list(map(serialize, reviews)))
+
+
 @app.route('/register', methods=['POST'])
 def register():
     json = request.get_json()
@@ -221,13 +230,11 @@ def rate_place(id):
     return jsonify({'status': 'ok'})
 
 
-@app.route('/create_naviaddress', methods=['POST'])
-def create_naviaddress():
-    json = request.get_json()
-    if (not json or not all(param in json for param in ['lat', 'lng', 'default_lang', 'address_type']) or
-            type(json['lat']) != float or
-            type(json['lng']) != float):
-        return jsonify({'error': 'invalid_json'})
+def create_naviaddress(lat, lon, default_lang=app.config['NAVIADDRESS_DEFAULT_LANG'], address_type='free'):
+    data = {'lat': float(lat),
+            'lon': float(lon),
+            'default_lang': default_lang,
+            'address_type': address_type}
 
     session_url = app.config['NAVIADDRESS_API_URL']
     session_json = {
@@ -247,8 +254,7 @@ def create_naviaddress():
     else:
         return jsonify({'error': 'naviaddress_session_json_error'})
 
-    create_url = 'https://staging-api.naviaddress.com/api/v1.5/Addresses'
-    r = requests.post(create_url, data=dumps(json),
+    r = requests.post(app.config['NAVIADDRESS_ADDRESSES_URL'], data=data,
                       headers={'Content-Type': 'application/json',
                                'Accept': 'appication/json',
                                'auth-token': token})

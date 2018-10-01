@@ -39,6 +39,6 @@ def _serialize_review(obj):
         'id': obj.id,
         'user_id': obj.user_id,
         'place_id': obj.place_id,
+        'place': _serialize_place(Place.query.get(obj.place_id)) if obj.place_id else None,
         'rating': obj.rating,
-        'content': obj.content
     }
