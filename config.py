@@ -8,10 +8,10 @@ SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 SECRET_KEY = 'cnc618_z_4_-)ajv*e#d(ml-@0$k!^45_av2+mj@12js8()@v6'
 
-NAVIADDRESS_SESSION_URL = 'https://staging-api.naviaddress.com/api/v1.5/Sessions'
-NAVIADDRESS_ADDRESSES_URL = 'https://staging-api.naviaddress.com/api/v1.5/Addresses'
-NAVIADDRESS_ACCEPT_URL = 'https://staging-api.naviaddress.com/api/v1.5/Addresses/accept/{}/{}'
-NAVIADDRESS_UPDATE_URL = 'https://staging-api.naviaddress.com/api/v1.5/Addresses/{}/{}'
+NAVIADDRESS_SESSION_URL = 'https://api.naviaddress.com/api/v1.5/Sessions'
+NAVIADDRESS_ADDRESSES_URL = 'https://api.naviaddress.com/api/v1.5/Addresses'
+NAVIADDRESS_ACCEPT_URL = 'https://api.naviaddress.com/api/v1.5/Addresses/accept/{}/{}'
+NAVIADDRESS_UPDATE_URL = 'https://api.naviaddress.com/api/v1.5/Addresses/{}/{}'
 
 NAVIADDRESS_DEFAULT_LANG = 'ru'
 
